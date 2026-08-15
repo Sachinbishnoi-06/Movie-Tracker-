@@ -1,0 +1,1190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Movie & Series Tracker</title>
+
+<style>
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+    font-family:Segoe UI,Arial,sans-serif;
+}
+
+body{
+    min-height:100vh;
+    padding:25px;
+    color:white;
+    background:linear-gradient(135deg,#080b18,#171334,#2b1450);
+}
+
+.container{
+    max-width:1400px;
+    margin:auto;
+}
+
+h1{
+    text-align:center;
+    font-size:clamp(2rem,5vw,3.2rem);
+    margin:10px 0;
+    background:linear-gradient(90deg,#38bdf8,#8b5cf6,#ec4899);
+    -webkit-background-clip:text;
+    color:transparent;
+}
+
+.subtitle{
+    text-align:center;
+    opacity:.8;
+    margin-bottom:25px;
+}
+
+/* FORM */
+
+.form-box{
+    background:rgba(255,255,255,.08);
+    backdrop-filter:blur(18px);
+    border:1px solid rgba(255,255,255,.14);
+    box-shadow:0 10px 35px rgba(0,0,0,.35);
+    border-radius:20px;
+    padding:22px;
+    margin-bottom:22px;
+}
+
+input,
+select{
+    width:100%;
+    padding:13px;
+    margin-top:10px;
+    border:1px solid rgba(255,255,255,.12);
+    border-radius:11px;
+    outline:none;
+    background:rgba(255,255,255,.1);
+    color:white;
+    font-size:15px;
+}
+
+input::placeholder{
+    color:#cbd5e1;
+}
+
+select option{
+    color:#111;
+}
+
+#seriesFields{
+    display:none;
+    margin-top:5px;
+}
+
+#seasonEpisodesContainer{
+    display:grid;
+    gap:8px;
+}
+
+.season-input{
+    margin-top:0;
+}
+
+/* BUTTON */
+
+button{
+    border:0;
+    border-radius:11px;
+    padding:12px 18px;
+    color:white;
+    font-weight:700;
+    cursor:pointer;
+    transition:.25s;
+}
+
+button:hover{
+    transform:translateY(-2px);
+}
+
+.add-btn{
+    width:100%;
+    margin-top:12px;
+    background:linear-gradient(90deg,#22c55e,#16a34a);
+}
+
+/* FILTER */
+
+.filters{
+    display:flex;
+    justify-content:center;
+    gap:10px;
+    flex-wrap:wrap;
+    margin-bottom:18px;
+}
+
+.filter-btn{
+    background:linear-gradient(90deg,#3b82f6,#2563eb);
+}
+
+.filter-btn.active{
+    box-shadow:0 0 22px rgba(139,92,246,.55);
+    background:linear-gradient(90deg,#8b5cf6,#ec4899);
+}
+
+/* SEARCH */
+
+.search-box{
+    margin-bottom:22px;
+}
+
+/* GRID */
+
+.movie-grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fill,minmax(290px,1fr));
+    gap:24px;
+}
+
+/* CARD */
+
+.card{
+    overflow:hidden;
+    background:rgba(255,255,255,.08);
+    backdrop-filter:blur(18px);
+    border:1px solid rgba(255,255,255,.14);
+    box-shadow:0 10px 35px rgba(0,0,0,.35);
+    border-radius:20px;
+    transition:.3s;
+}
+
+.card:hover{
+    transform:translateY(-7px);
+    box-shadow:0 18px 45px rgba(139,92,246,.35);
+}
+
+.card img{
+    width:100%;
+    height:400px;
+    object-fit:cover;
+    display:block;
+}
+
+.content{
+    padding:17px;
+}
+
+.movie-title{
+    font-size:22px;
+    font-weight:800;
+    margin-bottom:8px;
+}
+
+.movie-title a{
+    color:#93c5fd;
+    text-decoration:none;
+}
+
+.movie-title a:hover{
+    text-decoration:underline;
+}
+
+.meta{
+    margin:7px 0;
+    color:#e2e8f0;
+}
+
+.rating{
+    color:#facc15;
+    font-weight:800;
+}
+
+/* MORE */
+
+.more-btn{
+    margin-top:10px;
+    background:linear-gradient(90deg,#8b5cf6,#7c3aed);
+}
+
+.details{
+    display:none;
+    margin-top:12px;
+    padding:12px;
+    border-radius:12px;
+    background:rgba(0,0,0,.2);
+    border:1px solid rgba(255,255,255,.1);
+}
+
+.details p{
+    margin:7px 0;
+}
+
+/* DELETE */
+
+.delete-btn{
+    width:100%;
+    margin-top:10px;
+    background:linear-gradient(90deg,#ef4444,#dc2626);
+}
+
+/* EMPTY */
+
+.empty{
+    text-align:center;
+    opacity:.7;
+    padding:40px;
+    grid-column:1/-1;
+}
+
+/* MOBILE */
+
+@media(max-width:650px){
+
+    body{
+        padding:14px;
+    }
+
+    .movie-grid{
+        grid-template-columns:1fr;
+    }
+
+    .card img{
+        height:390px;
+    }
+
+    .filters{
+        flex-direction:column;
+    }
+
+    .filter-btn{
+        width:100%;
+    }
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+    <h1>🎬 Movie & Series Tracker</h1>
+
+    <p class="subtitle">
+        Your Personal Movie & Web Series Collection
+    </p>
+
+
+    <!-- ADD FORM -->
+
+    <div class="form-box">
+
+        <input
+            id="title"
+            type="text"
+            placeholder="Movie / Series Name"
+        >
+
+        <select
+            id="type"
+            onchange="toggleSeriesFields()"
+        >
+            <option value="Movie">
+                🎬 Movie
+            </option>
+
+            <option value="Web Series">
+                📺 Web Series
+            </option>
+        </select>
+
+
+        <input
+            id="rating"
+            type="number"
+            min="0"
+            max="10"
+            step="0.1"
+            placeholder="Rating Out Of 10"
+        >
+
+
+        <select id="status">
+
+            <option value="Loved">
+                😍 Loved It
+            </option>
+
+            <option value="Liked">
+                👍 Liked
+            </option>
+
+            <option value="Average">
+                😐 Average
+            </option>
+
+            <option value="Disliked">
+                👎 Disliked
+            </option>
+
+        </select>
+
+
+        <!-- WEB SERIES SECTION -->
+
+        <div id="seriesFields">
+
+            <input
+                id="seasons"
+                type="number"
+                min="1"
+                placeholder="Number Of Seasons"
+                oninput="generateSeasonInputs()"
+            >
+
+            <div id="seasonEpisodesContainer"></div>
+
+        </div>
+
+
+        <input
+            id="image"
+            type="url"
+            placeholder="Poster Image URL"
+        >
+
+
+        <button
+            class="add-btn"
+            onclick="addMovie()"
+        >
+            ➕ Add To Collection
+        </button>
+
+    </div>
+
+
+    <!-- FILTERS -->
+
+    <div class="filters">
+
+        <button
+            class="filter-btn active"
+            data-filter="all"
+            onclick="filterContent('all')"
+        >
+            🏠 Home
+        </button>
+
+        <button
+            class="filter-btn"
+            data-filter="Movie"
+            onclick="filterContent('Movie')"
+        >
+            🎬 Movies
+        </button>
+
+        <button
+            class="filter-btn"
+            data-filter="Web Series"
+            onclick="filterContent('Web Series')"
+        >
+            📺 Web Series
+        </button>
+
+    </div>
+
+
+    <!-- SEARCH -->
+
+    <div class="search-box">
+
+        <input
+            id="search"
+            type="search"
+            placeholder="🔍 Search your collection..."
+            oninput="searchMovies()"
+        >
+
+    </div>
+
+
+    <!-- MOVIES -->
+
+    <div
+        id="movieList"
+        class="movie-grid"
+    ></div>
+
+</div>
+
+
+<script>
+
+/* =====================================
+   STORAGE
+===================================== */
+
+let movies =
+JSON.parse(
+    localStorage.getItem("movieTracker")
+) || [];
+
+
+let currentFilter = "all";
+
+let currentSearch = "";
+
+
+/* =====================================
+   SAVE DATA
+===================================== */
+
+function saveData(){
+
+    localStorage.setItem(
+        "movieTracker",
+        JSON.stringify(movies)
+    );
+
+}
+
+
+/* =====================================
+   SHOW / HIDE SERIES
+===================================== */
+
+function toggleSeriesFields(){
+
+    const type =
+        document.getElementById("type").value;
+
+    const seriesFields =
+        document.getElementById("seriesFields");
+
+
+    if(type === "Web Series"){
+
+        seriesFields.style.display = "block";
+
+    }
+    else{
+
+        seriesFields.style.display = "none";
+
+        document.getElementById("seasons").value = "";
+
+        document.getElementById(
+            "seasonEpisodesContainer"
+        ).innerHTML = "";
+
+    }
+
+}
+
+
+/* =====================================
+   GENERATE SEASON INPUTS
+===================================== */
+
+function generateSeasonInputs(){
+
+    const count =
+        parseInt(
+            document.getElementById("seasons").value
+        ) || 0;
+
+
+    const container =
+        document.getElementById(
+            "seasonEpisodesContainer"
+        );
+
+
+    const oldValues =
+        [
+            ...document.querySelectorAll(
+                ".season-input"
+            )
+        ].map(input => input.value);
+
+
+    container.innerHTML = "";
+
+
+    for(let i = 1; i <= count; i++){
+
+        const input =
+            document.createElement("input");
+
+
+        input.type = "number";
+
+        input.min = "0";
+
+        input.className =
+            "season-input";
+
+
+        input.placeholder =
+            `Season ${i} Episodes`;
+
+
+        input.value =
+            oldValues[i - 1] || "";
+
+
+        container.appendChild(input);
+
+    }
+
+}
+
+
+/* =====================================
+   ADD MOVIE
+===================================== */
+
+function addMovie(){
+
+    const title =
+        document.getElementById("title")
+        .value.trim();
+
+
+    const type =
+        document.getElementById("type")
+        .value;
+
+
+    const rating =
+        document.getElementById("rating")
+        .value;
+
+
+    const status =
+        document.getElementById("status")
+        .value;
+
+
+    const image =
+        document.getElementById("image")
+        .value.trim();
+
+
+    /* TITLE CHECK */
+
+    if(!title){
+
+        alert(
+            "Please enter Movie / Series Name."
+        );
+
+        return;
+
+    }
+
+
+    /* RATING CHECK */
+
+    if(
+        rating === "" ||
+        rating < 0 ||
+        rating > 10
+    ){
+
+        alert(
+            "Please enter a rating between 0 and 10."
+        );
+
+        return;
+
+    }
+
+
+    /* SEASON DATA */
+
+    let seasonEpisodes = [];
+
+
+    if(type === "Web Series"){
+
+        const seasonCount =
+            parseInt(
+                document.getElementById("seasons").value
+            ) || 0;
+
+
+        if(seasonCount < 1){
+
+            alert(
+                "Please enter the number of seasons."
+            );
+
+            return;
+
+        }
+
+
+        document
+        .querySelectorAll(".season-input")
+        .forEach(
+            (input,index) => {
+
+                seasonEpisodes.push({
+
+                    season:index + 1,
+
+                    episodes:
+                        input.value || 0
+
+                });
+
+            }
+        );
+
+    }
+
+
+    /* CREATE OBJECT */
+
+    const movie = {
+
+        id:Date.now(),
+
+        title:title,
+
+        type:type,
+
+        rating:rating,
+
+        status:status,
+
+        image:image,
+
+        seasons:
+            seasonEpisodes.length,
+
+        seasonEpisodes:
+            seasonEpisodes
+
+    };
+
+
+    /* ADD */
+
+    movies.push(movie);
+
+
+    /* ALPHABETICAL SORT */
+
+    movies.sort(
+        (a,b) =>
+        a.title.localeCompare(
+            b.title,
+            undefined,
+            {
+                sensitivity:"base"
+            }
+        )
+    );
+
+
+    saveData();
+
+    clearForm();
+
+    renderMovies();
+
+}
+
+
+/* =====================================
+   CLEAR FORM
+===================================== */
+
+function clearForm(){
+
+    document.getElementById(
+        "title"
+    ).value = "";
+
+
+    document.getElementById(
+        "rating"
+    ).value = "";
+
+
+    document.getElementById(
+        "image"
+    ).value = "";
+
+
+    document.getElementById(
+        "seasons"
+    ).value = "";
+
+
+    document.getElementById(
+        "seasonEpisodesContainer"
+    ).innerHTML = "";
+
+
+    document.getElementById(
+        "type"
+    ).value = "Movie";
+
+
+    toggleSeriesFields();
+
+}
+
+
+/* =====================================
+   FILTER
+===================================== */
+
+function filterContent(type){
+
+    currentFilter = type;
+
+
+    document
+    .querySelectorAll(".filter-btn")
+    .forEach(
+        button => {
+
+            button.classList.toggle(
+                "active",
+                button.dataset.filter === type
+            );
+
+        }
+    );
+
+
+    renderMovies();
+
+}
+
+
+/* =====================================
+   SEARCH
+===================================== */
+
+function searchMovies(){
+
+    currentSearch =
+        document.getElementById("search")
+        .value
+        .trim()
+        .toLowerCase();
+
+
+    renderMovies();
+
+}
+
+
+/* =====================================
+   MORE DETAILS
+===================================== */
+
+function toggleDetails(id){
+
+    const details =
+        document.getElementById(id);
+
+
+    const button =
+        document.querySelector(
+            `[data-details="${id}"]`
+        );
+
+
+    if(details.style.display === "block"){
+
+        details.style.display = "none";
+
+        button.textContent =
+            "More Details";
+
+    }
+    else{
+
+        details.style.display = "block";
+
+        button.textContent =
+            "Hide Details";
+
+    }
+
+}
+
+
+/* =====================================
+   DELETE
+===================================== */
+
+function deleteMovie(id){
+
+    const confirmDelete =
+        confirm(
+            "Delete this item from your collection?"
+        );
+
+
+    if(!confirmDelete){
+
+        return;
+
+    }
+
+
+    movies =
+        movies.filter(
+            movie => movie.id !== id
+        );
+
+
+    saveData();
+
+    renderMovies();
+
+}
+
+
+/* =====================================
+   SECURITY TEXT
+===================================== */
+
+function safeText(value){
+
+    return String(
+        value ?? ""
+    ).replace(
+        /[&<>"']/g,
+
+        function(character){
+
+            return {
+
+                "&":"&amp;",
+
+                "<":"&lt;",
+
+                ">":"&gt;",
+
+                '"':"&quot;",
+
+                "'":"&#039;"
+
+            }[character];
+
+        }
+    );
+
+}
+
+
+/* =====================================
+   DISPLAY MOVIES
+===================================== */
+
+function renderMovies(){
+
+    const list =
+        document.getElementById(
+            "movieList"
+        );
+
+
+    list.innerHTML = "";
+
+
+    /* FILTER */
+
+    const filtered =
+        movies.filter(
+            movie => {
+
+                const typeOK =
+                    currentFilter === "all" ||
+                    movie.type === currentFilter;
+
+
+                const searchOK =
+                    movie.title
+                    .toLowerCase()
+                    .includes(
+                        currentSearch
+                    );
+
+
+                return typeOK && searchOK;
+
+            }
+        );
+
+
+    /* EMPTY */
+
+    if(filtered.length === 0){
+
+        list.innerHTML = `
+            <div class="empty">
+                No movies or web series found.
+            </div>
+        `;
+
+        return;
+
+    }
+
+
+    /* CARDS */
+
+    filtered.forEach(
+        movie => {
+
+            const detailsId =
+                "details-" + movie.id;
+
+
+            const poster =
+                movie.image ||
+                "https://placehold.co/600x850?text=No+Poster";
+
+
+            let seasonHTML = "";
+
+
+            /* SEASONS */
+
+            if(
+                movie.type === "Web Series"
+            ){
+
+                seasonHTML =
+                    (movie.seasonEpisodes || [])
+                    .map(
+                        season => `
+
+                            <p>
+
+                                📺
+
+                                <strong>
+                                    Season ${season.season}
+                                </strong>
+
+                                —
+
+                                ${safeText(
+                                    season.episodes
+                                )}
+
+                                Episodes
+
+                            </p>
+
+                        `
+                    )
+                    .join("");
+
+            }
+
+
+            list.insertAdjacentHTML(
+                "beforeend",
+
+                `
+
+                <article class="card">
+
+                    <!-- POSTER -->
+
+                    <a
+                        target="_blank"
+                        rel="noopener"
+                        href="https://www.google.com/search?q=${encodeURIComponent(movie.title)}"
+                    >
+
+                        <img
+
+                            src="${safeText(poster)}"
+
+                            alt="${safeText(movie.title)}"
+
+                            onerror="
+                                this.src='https://placehold.co/600x850?text=No+Poster'
+                            "
+
+                        >
+
+                    </a>
+
+
+                    <div class="content">
+
+
+                        <!-- TITLE -->
+
+                        <div class="movie-title">
+
+                            <a
+
+                                target="_blank"
+
+                                rel="noopener"
+
+                                href="https://www.google.com/search?q=${encodeURIComponent(movie.title)}"
+
+                            >
+
+                                ${safeText(movie.title)}
+
+                            </a>
+
+                        </div>
+
+
+                        <!-- TYPE -->
+
+                        <p class="meta">
+
+                            🎞️
+
+                            ${safeText(movie.type)}
+
+                        </p>
+
+
+                        <!-- RATING -->
+
+                        <p class="meta rating">
+
+                            ⭐
+
+                            ${safeText(movie.rating)}
+
+                            /10
+
+                        </p>
+
+
+                        <!-- STATUS -->
+
+                        <p class="meta">
+
+                            Status:
+
+                            ${safeText(movie.status)}
+
+                        </p>
+
+
+                        <!-- MORE -->
+
+                        <button
+
+                            class="more-btn"
+
+                            data-details="${detailsId}"
+
+                            onclick="
+                                toggleDetails('${detailsId}')
+                            "
+
+                        >
+
+                            More Details
+
+                        </button>
+
+
+                        <!-- DETAILS -->
+
+                        <div
+
+                            class="details"
+
+                            id="${detailsId}"
+
+                        >
+
+                            ${
+                                movie.type === "Web Series"
+
+                                ?
+
+                                `
+
+                                <p>
+
+                                    📚
+
+                                    <strong>
+                                        Total Seasons:
+                                    </strong>
+
+                                    ${movie.seasons}
+
+                                </p>
+
+                                ${seasonHTML}
+
+                                `
+
+                                :
+
+                                `
+
+                                <p>
+                                    🎬 This is a movie.
+                                </p>
+
+                                `
+                            }
+
+                        </div>
+
+
+                        <!-- DELETE -->
+
+                        <button
+
+                            class="delete-btn"
+
+                            onclick="
+                                deleteMovie(${movie.id})
+                            "
+
+                        >
+
+                            🗑️ Delete
+
+                        </button>
+
+
+                    </div>
+
+                </article>
+
+                `
+
+            );
+
+        }
+    );
+
+}
+
+
+/* =====================================
+   START
+===================================== */
+
+toggleSeriesFields();
+
+renderMovies();
+
+</script>
+
+</body>
+</html>
